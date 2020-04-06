@@ -22,7 +22,7 @@ testData = [ Place "London" (51.5, -0.1) [0, 0, 5, 8, 8, 0, 0],
              Place "Cardiff" (51.5, -3.2) [12, 8, 15, 0, 0, 0, 2],
              Place "Norwich" (52.6, 1.3) [0, 6, 5, 0, 0, 0, 3],
              Place "Birmingham" (52.5, -1.9) [0, 2, 10, 7, 8, 2, 2],
-             Place "Birmingham" (53.4, -3.0) [8, 16, 20, 3, 4, 9, 2],
+             Place "Liverpool" (53.4, -3.0) [8, 16, 20, 3, 4, 9, 2],
              Place "Hull" (53.8, -0.3) [0, 6, 5, 0, 0, 0, 4],
              Place "Newcastle" (55.0, -1.6) [0, 0, 8, 3, 6, 7, 5],
              Place "Belfast" (54.6, -5.9) [10, 18, 14, 0, 6, 5, 2],
@@ -39,13 +39,12 @@ testData = [ Place "London" (51.5, -0.1) [0, 0, 5, 8, 8, 0, 0],
 
 
 
-
 --
 --  Demo
 --
 
--- demo :: Int -> IO ()
--- demo 1 = -- display the names of all the places
+demo :: Int -> IO ()
+demo 1 = print (map locationName testData)
 -- demo 2 = -- display, to two decimal places, the average rainfall in Cardiff
 -- demo 3 = putStrLn (placesToString testData)
 -- demo 4 = -- display the names of all places that were dry two days ago

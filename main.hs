@@ -37,15 +37,26 @@ testData = [ Place "London" (51.5, -0.1) [0, 0, 5, 8, 8, 0, 0],
 --  Your functional code goes here
 --
 
+getPlaceNames :: [String]
+getPlaceNames = map locationName testData
 
+
+getAverageRainfall :: String -> Float
+getAverageRainfall searchName = averageList ( rainData ( getPlaceByName searchName ) )
+
+getPlaceByName :: String -> Place
+getPlaceByName searchName = head [ x | x <- testData, locationName x == searchName ]
+
+averageList :: [Int] -> Float
+averageList input = fromIntegral (sum input) / fromIntegral (length input)
 
 --
 --  Demo
 --
 
 demo :: Int -> IO ()
-demo 1 = print (map locationName testData)
--- demo 2 = -- display, to two decimal places, the average rainfall in Cardiff
+demo 1 = print getPlaceNames
+demo 2 = print ( getAverageRainfall "Cardiff" )
 -- demo 3 = putStrLn (placesToString testData)
 -- demo 4 = -- display the names of all places that were dry two days ago
 -- demo 5 = -- update the data with most recent rainfall 

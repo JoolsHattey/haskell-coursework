@@ -64,6 +64,14 @@ formatLocationName location = location ++ intercalate "" ( replicate (13-(length
 rainDataToString :: [Int] -> String
 rainDataToString rainData = intercalate " " ( map show rainData )
 
+
+outputDryPlaces :: Int -> [String]
+outputDryPlaces numDays = map locationName ( getDryPlaces numDays )
+
+getDryPlaces :: Int -> [Place]
+getDryPlaces numDays = [ x | x <- testData, (rainData x) !! (numDays-1) == 0]
+
+
 --
 --  Demo
 --
@@ -72,7 +80,7 @@ demo :: Int -> IO ()
 demo 1 = print getPlaceNames
 demo 2 = print ( getAverageRainfall "Cardiff" )
 demo 3 = putStrLn ( placesToString testData )
--- demo 4 = -- display the names of all places that were dry two days ago
+demo 4 = print ( outputDryPlaces 2 )
 -- demo 5 = -- update the data with most recent rainfall 
 --          --[0,8,0,0,5,0,0,3,4,2,0,8,0,0] (and remove oldest rainfall figures)
 -- demo 6 = -- replace "Plymouth" with "Portsmouth" which has 

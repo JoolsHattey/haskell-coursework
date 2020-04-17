@@ -5,6 +5,7 @@
 --
 
 
+import Data.List
 
 --
 -- Types (define Place type here)
@@ -50,6 +51,19 @@ getPlaceByName searchName = head [ x | x <- testData, locationName x == searchNa
 averageList :: [Int] -> Float
 averageList input = fromIntegral (sum input) / fromIntegral (length input)
 
+
+placesToString :: [Place] -> String
+placesToString placesList = intercalate "" (map placeToString placesList)
+
+placeToString :: Place -> String
+placeToString placeData = formatLocationName ( locationName placeData ) ++ (rainDataToString ( rainData placeData ) ) ++ "\n"
+
+formatLocationName :: String -> String
+formatLocationName location = location ++ intercalate "" ( replicate (13-(length location)) " ")
+
+rainDataToString :: [Int] -> String
+rainDataToString rainData = intercalate " " ( map show rainData )
+
 --
 --  Demo
 --
@@ -57,7 +71,7 @@ averageList input = fromIntegral (sum input) / fromIntegral (length input)
 demo :: Int -> IO ()
 demo 1 = print getPlaceNames
 demo 2 = print ( getAverageRainfall "Cardiff" )
--- demo 3 = putStrLn (placesToString testData)
+demo 3 = putStrLn ( placesToString testData )
 -- demo 4 = -- display the names of all places that were dry two days ago
 -- demo 5 = -- update the data with most recent rainfall 
 --          --[0,8,0,0,5,0,0,3,4,2,0,8,0,0] (and remove oldest rainfall figures)

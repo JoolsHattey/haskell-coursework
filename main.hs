@@ -72,6 +72,19 @@ getDryPlaces :: Int -> [Place]
 getDryPlaces numDays = [ x | x <- testData, (rainData x) !! (numDays-1) == 0]
 
 
+-- updateRainfallData :: [Int]
+-- updateRainfallData data = map getfst data
+
+
+
+
+
+
+getDistance :: LatLng -> LatLng -> Double
+getDistance a b = (fst b - fst b) ** 2 + (snd b - snd a) ** 2
+
+
+
 --
 --  Demo
 --

@@ -6,6 +6,7 @@
 
 
 import Data.List
+import Data.Maybe
 
 --
 -- Types (define Place type here)
@@ -68,6 +69,7 @@ rainDataToString rainData = intercalate " " ( map show rainData )
 outputDryPlaces :: Int -> [String]
 outputDryPlaces numDays = map locationName ( getDryPlaces numDays )
 
+
 getDryPlaces :: Int -> [Place]
 getDryPlaces numDays = [ x | x <- testData, (rainData x) !! (numDays-1) == 0]
 
@@ -78,10 +80,20 @@ getDryPlaces numDays = [ x | x <- testData, (rainData x) !! (numDays-1) == 0]
 
 
 
+returnClosestDryPlace :: LatLng -> Place
+returnClosestDryPlace location = ( getDryPlaces 1 ) !! ( getSmallestIndex ( getDistanceFromPlaces location ( getDryPlaces 1 ) ) )
 
+getDistanceFromPlaces :: LatLng -> [Place] -> [Double]
+getDistanceFromPlaces location places = map (getDistance location) (map position places)
+
+-- orderPlacesByDistance :: LatLng -> [Place]
+-- orderPlacesByDistance location = map getDistance testData
+
+getSmallestIndex :: [Double] -> Int
+getSmallestIndex listData = fromMaybe 0 ( findIndex (==minimum listData) listData )
 
 getDistance :: LatLng -> LatLng -> Double
-getDistance a b = (fst b - fst b) ** 2 + (snd b - snd a) ** 2
+getDistance a b = (fst b - fst a) ** 2 + (snd b - snd a) ** 2
 
 
 
@@ -98,8 +110,7 @@ demo 4 = print ( outputDryPlaces 2 )
 --          --[0,8,0,0,5,0,0,3,4,2,0,8,0,0] (and remove oldest rainfall figures)
 -- demo 6 = -- replace "Plymouth" with "Portsmouth" which has 
 --          -- location 50.8 (N), -1.1 (E) and rainfall 0, 0, 3, 2, 5, 2, 1
--- demo 7 = -- display the name of the place closest to 50.9 (N), -1.3 (E) 
---          -- that was dry yesterday
+demo 7 = print ( returnClosestDryPlace (50.9, -1.3) )
 -- demo 8 = -- display the rainfall map
 
 

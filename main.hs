@@ -39,9 +39,13 @@ testData = [ Place "London" (51.5, -0.1) [0, 0, 5, 8, 8, 0, 0],
 --  Your functional code goes here
 --
 
+-- demo 1
+
 getPlaceNames :: [String]
 getPlaceNames = map locationName testData
 
+
+-- demo 2
 
 getAverageRainfall :: String -> Float
 getAverageRainfall searchName = averageList ( rainData ( getPlaceByName searchName ) )
@@ -52,6 +56,8 @@ getPlaceByName searchName = head [ x | x <- testData, locationName x == searchNa
 averageList :: [Int] -> Float
 averageList input = fromIntegral (sum input) / fromIntegral (length input)
 
+
+-- demo 3
 
 placesToString :: [Place] -> String
 placesToString placesList = intercalate "" (map placeToString placesList)
@@ -66,19 +72,34 @@ rainDataToString :: [Int] -> String
 rainDataToString rainData = intercalate " " ( map show rainData )
 
 
+-- demo 4
+
 outputDryPlaces :: Int -> [String]
 outputDryPlaces numDays = map locationName ( getDryPlaces numDays )
-
 
 getDryPlaces :: Int -> [Place]
 getDryPlaces numDays = [ x | x <- testData, (rainData x) !! (numDays-1) == 0]
 
 
+--  demo 5
+
 -- updateRainfallData :: [Int]
 -- updateRainfallData data = map getfst data
 
 
+-- demo 6
 
+updateData :: String -> Place -> [Place] -> [Place]
+updateData oldPlaceName newPlace placeList = replace (getIndex oldPlaceName) newPlace placeList
+
+getIndex :: String -> Int
+getIndex searchString = fromMaybe 0 ( findIndex (==searchString) (map locationName testData) )
+
+replace :: Int -> Place -> [Place] -> [Place]
+replace pos newVal list = take pos list ++ newVal : drop (pos+1) list
+
+
+-- demo 7
 
 returnClosestDryPlace :: LatLng -> Place
 returnClosestDryPlace location = ( getDryPlaces 1 ) !! ( getSmallestIndex ( getDistanceFromPlaces location ( getDryPlaces 1 ) ) )
@@ -96,7 +117,6 @@ getDistance :: LatLng -> LatLng -> Double
 getDistance a b = (fst b - fst a) ** 2 + (snd b - snd a) ** 2
 
 
-
 --
 --  Demo
 --
@@ -108,6 +128,7 @@ demo 3 = putStrLn ( placesToString testData )
 demo 4 = print ( outputDryPlaces 2 )
 -- demo 5 = -- update the data with most recent rainfall 
 --          --[0,8,0,0,5,0,0,3,4,2,0,8,0,0] (and remove oldest rainfall figures)
+demo 6 = print ( updateData "Plymouth" (Place "Portsmouth" (50.8, -1.1) [0, 0, 3, 2, 5, 2, 1]) testData )
 -- demo 6 = -- replace "Plymouth" with "Portsmouth" which has 
 --          -- location 50.8 (N), -1.1 (E) and rainfall 0, 0, 3, 2, 5, 2, 1
 demo 7 = print ( returnClosestDryPlace (50.9, -1.3) )

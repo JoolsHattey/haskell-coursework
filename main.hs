@@ -1,9 +1,7 @@
 --
 -- MATHFUN
--- Template for the Haskell assignment program (replace this comment)
--- Add your student number
+-- UP894547
 --
-
 
 import Data.List
 import Data.Maybe
@@ -226,6 +224,18 @@ tuplify [x,y] = (read x,read y)
 
 extractPlaceRainData :: String -> [Int]
 extractPlaceRainData placeString = map read (map (filter (not . (`elem` ","))) (words ( snd ( splitAt 26 placeString ) ) ) ) :: [Int]
+
+stringifyPlace :: Place -> String
+stringifyPlace place = stringifyName place ++ stringifyLocation place ++ "   " ++ stringifyRainData place
+
+stringifyName :: Place -> String
+stringifyName place = (locationName place) ++ concat (replicate (14 - (length (locationName place))) " ")
+
+stringifyLocation :: Place -> String
+stringifyLocation place = show (fst (position place)) ++ "  " ++ show (snd (position place))
+
+stringifyRainData :: Place -> String
+stringifyRainData place = intercalate ", " (map show (rainData place))
 
 
 main :: IO ()

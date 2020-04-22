@@ -186,37 +186,51 @@ getHeightRatio = 50 / getHeightRange
 getScreenPos :: LatLng -> ScreenPosition
 getScreenPos pos = (round (((snd pos) - getLeftBound) * getWidthRatio), round (((fst pos) - getBottomBound) * getHeightRatio))
 
--- showMarkers :: IO ()
-showMarkers placeList = do
-    sequence [ writeAt (getScreenPos (position x)) ("+ " ++ locationName x ++ " " ++ show (getAverageRainfall x)) | x <- placeList ]
+showMarkers :: [Place] -> IO ()
+showMarkers placeList = sequence_ [ writeAt (getScreenPos (position x)) ("+ " ++ locationName x ++ " " ++ show (getAverageRainfall x)) | x <- placeList ]
 
 --
 -- Your user interface (and loading/saving) code goes here
 --
 
--- main :: IO ()
--- main = do
---     putStrLn "Rainfall Program\nPlease Select an Option:\n1: Return list of name of places\n2: Return average rainfall given a placename"
---     option <- getLine
---     feature (read option)
+main :: IO ()
+main = do
+    putStrLn "Rainfall Program\nPlease Select an Option:\n1: Return list of name of places\n2: Return average rainfall given a placename"
+    option <- getLine
+    feature (read option)
+    main
 
--- feature :: Int -> IO ()
--- feature 1 = print ( getPlaceNames testData )
--- feature 2 = do
---     putStrLn "Enter place name"
---     placeName <- getLine
---     print ( getAverageRainfall placeName testData )
--- feature 3 = print ( placesToString testData )
--- feature 4 = do
---     putStrLn "Enter number of days ago"
---     numDays <- getLine
---     print ( outputDryPlaces numDays testData )
--- -- feature 5 =
--- feature 6 = do
---     putStrLn "Enter location name to replace"
---     locationName <- getLine
---     putStrLn "Enter new place in this format (Place '<LocationName>' (Latitude, Longtitude) [List of raindata])"
---     placeData <- getLine
---     print ( updateData "Plymouth" (Place "Portsmouth" (50.8, -1.1) [0, 0, 3, 2, 5, 2, 1]) testData )
--- feature 7 = do
---     putStrLn ""
+feature :: Int -> IO ()
+feature 1 = print ( getPlaceNames testData )
+
+feature 2 = do
+    putStrLn "Enter place name"
+    placeName <- getLine
+    print ( getAverageRainfallFromName placeName testData )
+    main
+
+feature 3 = print ( placesToString testData )
+
+feature 4 = do
+    putStrLn "Enter number of days ago"
+    numDays <- getLine
+    print ( outputDryPlaces 2 testData )
+    main
+
+-- feature 5 =
+
+feature 6 = do
+    putStrLn "Enter location name to replace"
+    locationName <- getLine
+    putStrLn "Enter new place in this format (Place '<LocationName>' (Latitude, Longtitude) [List of raindata])"
+    placeData <- getLine
+    print ( updateData "Plymouth" (Place "Portsmouth" (50.8, -1.1) [0, 0, 3, 2, 5, 2, 1]) testData )
+    main
+
+feature 7 = do
+    putStrLn ""
+    main
+
+feature 8 = do
+    clearScreen
+    showMarkers testData

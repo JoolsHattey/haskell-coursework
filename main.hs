@@ -210,20 +210,19 @@ centerText origin yOffset text = ((fst origin - (div (length text) 2)),(snd orig
 --
 
 parsePlace :: String -> Place
-parsePlace placeString = Place (extractPlaceName placeString) ((51.5, -0.1)) (extractPlaceRainData placeString)
+parsePlace placeString = Place (parseName placeString) (parseLocation placeString) (parseRainData placeString)
 
-extractPlaceName :: String -> String
-extractPlaceName placeString = head (words placeString)
+parseName :: String -> String
+parseName placeString = head (words placeString)
 
--- extractPlaceLocation :: String -> LatLng
--- extractPlaceLocation placeString = do
---     return ( tuplify ( words ( fst (splitAt 10 (snd (splitAt 13 placeString))))))
+parseLocation :: String -> LatLng
+parseLocation placeString = ( tuplify ( words ( fst (splitAt 10 (snd (splitAt 13 placeString))))))
 
 tuplify :: [String] -> (Double,Double)
 tuplify [x,y] = (read x,read y)
 
-extractPlaceRainData :: String -> [Int]
-extractPlaceRainData placeString = map read (map (filter (not . (`elem` ","))) (words ( snd ( splitAt 26 placeString ) ) ) ) :: [Int]
+parseRainData :: String -> [Int]
+parseRainData placeString = map read (map (filter (not . (`elem` ","))) (words ( snd ( splitAt 26 placeString ) ) ) ) :: [Int]
 
 stringifyPlace :: Place -> String
 stringifyPlace place = stringifyName place ++ stringifyLocation place ++ "   " ++ stringifyRainData place
@@ -241,8 +240,8 @@ stringifyRainData place = intercalate ", " (map show (rainData place))
 main :: IO ()
 main = do
     content <- readFile "places.txt"
-    let placeData = lines content
-    let places = map parsePlace placeData
+    let placesString = lines content
+    let places = map parsePlace placesString
     putStrLn "Rainfall Program\n\
     \ Please Select an Option:\n\
     \ 1: Return list of name of places\n\
@@ -254,39 +253,39 @@ main = do
     \ 7: Return closest dry place to a location\n\
     \ 8: Display rainfall map"
     option <- getLine
-    feature (read option)
+    feature (read option) places
 
-feature :: Int -> IO ()
-feature 1 = print ( getPlaceNames testData )
+feature :: Int -> [Place] -> IO ()
+feature 1 placeData = print ( getPlaceNames placeData )
 
-feature 2 = do
+feature 2 placeData = do
     putStrLn "Enter place name"
     placeName <- getLine
-    print ( getAverageRainfallFromName placeName testData )
+    print ( getAverageRainfallFromName placeName placeData )
     main
 
-feature 3 = print ( placesToString testData )
+feature 3 placeData = print ( placesToString placeData )
 
-feature 4 = do
+feature 4 placeData = do
     putStrLn "Enter number of days ago"
     numDays <- getLine
-    print ( outputDryPlaces 2 testData )
+    print ( outputDryPlaces 2 placeData )
     main
 
--- feature 5 =
+-- feature 5 placeData =
 
-feature 6 = do
-    putStrLn "Enter location name to replace"
-    locationName <- getLine
-    putStrLn "Enter new place in this format (Place '<LocationName>' (Latitude, Longtitude) [List of raindata])"
-    placeData <- getLine
-    print ( updateData "Plymouth" (Place "Portsmouth" (50.8, -1.1) [0, 0, 3, 2, 5, 2, 1]) testData )
-    main
+-- feature 6 placeData = do
+--     putStrLn "Enter location name to replace"
+--     locationName <- getLine
+--     putStrLn "Enter new place in this format (Place '<LocationName>' (Latitude, Longtitude) [List of raindata])"
+--     placeData <- getLine
+--     print ( updateData "Plymouth" (Place "Portsmouth" (50.8, -1.1) [0, 0, 3, 2, 5, 2, 1]) placeData )
+--     main
 
-feature 7 = do
+feature 7 placeData = do
     putStrLn "Enter search loctation"
     main
 
-feature 8 = do
+feature 8 placeData = do
     clearScreen
-    showMarkers testData
+    showMarkers placeData

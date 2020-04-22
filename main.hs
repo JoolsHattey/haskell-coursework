@@ -8,6 +8,7 @@
 import Data.List
 import Data.Maybe
 
+
 --
 -- Types (define Place type here)
 --
@@ -34,6 +35,7 @@ testData = [ Place "London" (51.5, -0.1) [0, 0, 5, 8, 8, 0, 0],
              Place "Stornoway" (58.2, -6.4) [15, 6, 15, 0, 0, 4, 2],
              Place "Lerwick" (60.2, -1.1) [8, 10, 5, 5, 0, 0, 3],
              Place "St Helier" (49.2, -2.1) [0, 0, 0, 0, 6, 10, 0] ]
+
 
 --
 --  Your functional code goes here
@@ -204,12 +206,33 @@ renderText pos yOffset text = writeAt (centerText pos yOffset text) text
 centerText :: ScreenPosition -> Int -> String -> ScreenPosition
 centerText origin yOffset text = ((fst origin - (div (length text) 2)),(snd origin + yOffset))
 
+
 --
 -- Your user interface (and loading/saving) code goes here
 --
 
+parsePlace :: String -> Place
+parsePlace placeString = Place (extractPlaceName placeString) ((51.5, -0.1)) (extractPlaceRainData placeString)
+
+extractPlaceName :: String -> String
+extractPlaceName placeString = head (words placeString)
+
+-- extractPlaceLocation :: String -> LatLng
+-- extractPlaceLocation placeString = do
+--     return ( tuplify ( words ( fst (splitAt 10 (snd (splitAt 13 placeString))))))
+
+tuplify :: [String] -> (Double,Double)
+tuplify [x,y] = (read x,read y)
+
+extractPlaceRainData :: String -> [Int]
+extractPlaceRainData placeString = map read (map (filter (not . (`elem` ","))) (words ( snd ( splitAt 26 placeString ) ) ) ) :: [Int]
+
+
 main :: IO ()
 main = do
+    content <- readFile "places.txt"
+    let placeData = lines content
+    let places = map parsePlace placeData
     putStrLn "Rainfall Program\n\
     \ Please Select an Option:\n\
     \ 1: Return list of name of places\n\

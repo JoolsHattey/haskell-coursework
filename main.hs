@@ -47,8 +47,11 @@ getPlaceNames placeList = map locationName placeList
 
 -- demo 2
 
-getAverageRainfall :: String -> [Place] -> Float
-getAverageRainfall searchName placeList = averageList ( rainData ( getPlaceByName searchName placeList ) )
+getAverageRainfallFromName :: String -> [Place] -> Float
+getAverageRainfallFromName searchName placeList = getAverageRainfall ( getPlaceByName searchName placeList )
+
+getAverageRainfall :: Place -> Float
+getAverageRainfall place = averageList ( rainData place )
 
 getPlaceByName :: String -> [Place] -> Place
 getPlaceByName searchName placeList = head [ x | x <- placeList, locationName x == searchName ]
@@ -83,8 +86,8 @@ getDryPlaces numDays placeList = [ x | x <- placeList, (rainData x) !! (numDays-
 
 --  demo 5
 
--- updateRainfallData :: [Int]
--- updateRainfallData data = map getfst data
+-- updateRainfallData :: [Int] -> [Place] -> [Place]
+-- updateRainfallData newData placeList = map getfst data
 
 
 -- demo 6
@@ -120,14 +123,14 @@ getDistance a b = (fst b - fst a) ** 2 + (snd b - snd a) ** 2
 
 demo :: Int -> IO ()
 demo 1 = print ( getPlaceNames testData )
-demo 2 = print ( getAverageRainfall "Cardiff" testData )
+demo 2 = print ( getAverageRainfallFromName "Cardiff" testData )
 demo 3 = putStrLn ( placesToString testData )
 demo 4 = print ( outputDryPlaces 2 testData )
 -- demo 5 = -- update the data with most recent rainfall 
 --          --[0,8,0,0,5,0,0,3,4,2,0,8,0,0] (and remove oldest rainfall figures)
 demo 6 = print ( updateData "Plymouth" (Place "Portsmouth" (50.8, -1.1) [0, 0, 3, 2, 5, 2, 1]) testData )
 demo 7 = print ( returnClosestDryPlace (50.9, -1.3) testData )
--- demo 8 = -- display the rainfall map
+demo 8 = showMarkers testData
 
 
 --
@@ -150,15 +153,70 @@ writeAt :: ScreenPosition -> String -> IO ()
 writeAt position text = do
     goTo position
     putStr text
- 
+
 
 --
 -- Your rainfall map code goes here
 --
 
+getTopBound :: Double
+getTopBound = maximum (map fst (map position testData))
 
+getRightBound :: Double
+getRightBound = maximum (map snd (map position testData))
+
+getBottomBound :: Double
+getBottomBound = minimum (map fst (map position testData))
+
+getLeftBound :: Double
+getLeftBound = minimum (map snd (map position testData))
+
+getWidthRange :: Double
+getWidthRange = getRightBound - getLeftBound
+
+getHeightRange :: Double
+getHeightRange = getTopBound - getBottomBound
+
+getWidthRatio :: Double
+getWidthRatio = 80 / getWidthRange
+
+getHeightRatio :: Double
+getHeightRatio = 50 / getHeightRange
+
+getScreenPos :: LatLng -> ScreenPosition
+getScreenPos pos = (round (((snd pos) - getLeftBound) * getWidthRatio), round (((fst pos) - getBottomBound) * getHeightRatio))
+
+-- showMarkers :: IO ()
+showMarkers placeList = do
+    sequence [ writeAt (getScreenPos (position x)) ("+ " ++ locationName x ++ " " ++ show (getAverageRainfall x)) | x <- placeList ]
 
 --
 -- Your user interface (and loading/saving) code goes here
 --
- 
+
+-- main :: IO ()
+-- main = do
+--     putStrLn "Rainfall Program\nPlease Select an Option:\n1: Return list of name of places\n2: Return average rainfall given a placename"
+--     option <- getLine
+--     feature (read option)
+
+-- feature :: Int -> IO ()
+-- feature 1 = print ( getPlaceNames testData )
+-- feature 2 = do
+--     putStrLn "Enter place name"
+--     placeName <- getLine
+--     print ( getAverageRainfall placeName testData )
+-- feature 3 = print ( placesToString testData )
+-- feature 4 = do
+--     putStrLn "Enter number of days ago"
+--     numDays <- getLine
+--     print ( outputDryPlaces numDays testData )
+-- -- feature 5 =
+-- feature 6 = do
+--     putStrLn "Enter location name to replace"
+--     locationName <- getLine
+--     putStrLn "Enter new place in this format (Place '<LocationName>' (Latitude, Longtitude) [List of raindata])"
+--     placeData <- getLine
+--     print ( updateData "Plymouth" (Place "Portsmouth" (50.8, -1.1) [0, 0, 3, 2, 5, 2, 1]) testData )
+-- feature 7 = do
+--     putStrLn ""

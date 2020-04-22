@@ -159,17 +159,20 @@ writeAt position text = do
 -- Your rainfall map code goes here
 --
 
+padding :: Double
+padding = 1.0
+
 getTopBound :: Double
-getTopBound = maximum (map fst (map position testData))
+getTopBound = maximum (map fst (map position testData)) + padding
 
 getRightBound :: Double
-getRightBound = maximum (map snd (map position testData))
+getRightBound = maximum (map snd (map position testData)) + padding
 
 getBottomBound :: Double
-getBottomBound = minimum (map fst (map position testData))
+getBottomBound = minimum (map fst (map position testData)) - padding
 
 getLeftBound :: Double
-getLeftBound = minimum (map snd (map position testData))
+getLeftBound = (minimum (map snd (map position testData))) - padding
 
 getWidthRange :: Double
 getWidthRange = getRightBound - getLeftBound
@@ -184,10 +187,22 @@ getHeightRatio :: Double
 getHeightRatio = 50 / getHeightRange
 
 getScreenPos :: LatLng -> ScreenPosition
-getScreenPos pos = (round (((snd pos) - getLeftBound) * getWidthRatio), round (((fst pos) - getBottomBound) * getHeightRatio))
+getScreenPos pos = (round (abs((getLeftBound - (snd pos))) * getWidthRatio), round ((getTopBound - (fst pos)) * getHeightRatio))
 
 showMarkers :: [Place] -> IO ()
-showMarkers placeList = sequence_ [ writeAt (getScreenPos (position x)) ("+ " ++ locationName x ++ " " ++ show (getAverageRainfall x)) | x <- placeList ]
+showMarkers placeList = sequence_ [ renderMarker (getScreenPos (position x)) x | x <- placeList ]
+
+renderMarker :: ScreenPosition -> Place -> IO ()
+renderMarker pos place = do
+    writeAt pos "+"
+    renderText pos 1 (locationName place)
+    renderText pos 2 ("Avg rain: " ++ show (getAverageRainfall place))
+
+renderText :: ScreenPosition -> Int -> String -> IO ()
+renderText pos yOffset text = writeAt (centerText pos yOffset text) text
+
+centerText :: ScreenPosition -> Int -> String -> ScreenPosition
+centerText origin yOffset text = ((fst origin - (div (length text) 2)),(snd origin + yOffset))
 
 --
 -- Your user interface (and loading/saving) code goes here
@@ -195,10 +210,18 @@ showMarkers placeList = sequence_ [ writeAt (getScreenPos (position x)) ("+ " ++
 
 main :: IO ()
 main = do
-    putStrLn "Rainfall Program\nPlease Select an Option:\n1: Return list of name of places\n2: Return average rainfall given a placename"
+    putStrLn "Rainfall Program\n\
+    \ Please Select an Option:\n\
+    \ 1: Return list of name of places\n\
+    \ 2: Return average rainfall given a placename\n\
+    \ 3: Print all places and their raindata in columns\n\
+    \ 4: Return places that were dry a given number of days ago\n\
+    \ 5: Update raindata with a list of new values\n\
+    \ 6: Replace location with a new location\n\
+    \ 7: Return closest dry place to a location\n\
+    \ 8: Display rainfall map"
     option <- getLine
     feature (read option)
-    main
 
 feature :: Int -> IO ()
 feature 1 = print ( getPlaceNames testData )
@@ -228,7 +251,7 @@ feature 6 = do
     main
 
 feature 7 = do
-    putStrLn ""
+    putStrLn "Enter search loctation"
     main
 
 feature 8 = do

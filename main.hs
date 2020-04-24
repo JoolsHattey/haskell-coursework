@@ -5,7 +5,7 @@
 
 import Data.List
 import Data.Maybe
-
+import Data.Char (isSpace)
 
 --
 -- Types (define Place type here)
@@ -213,7 +213,9 @@ parsePlace :: String -> Place
 parsePlace placeString = Place (parseName placeString) (parseLocation placeString) (parseRainData placeString)
 
 parseName :: String -> String
-parseName placeString = head (words placeString)
+parseName placeString = trim ( fst (splitAt 13 placeString) )
+
+trim = dropWhileEnd isSpace . dropWhile isSpace
 
 parseLocation :: String -> LatLng
 parseLocation placeString = ( tuplify ( words ( fst (splitAt 10 (snd (splitAt 13 placeString))))))
@@ -224,8 +226,12 @@ tuplify [x,y] = (read x,read y)
 parseRainData :: String -> [Int]
 parseRainData placeString = map read (map (filter (not . (`elem` ","))) (words ( snd ( splitAt 26 placeString ) ) ) ) :: [Int]
 
+
+stringifyPlaces :: [Place] -> String
+stringifyPlaces placeList = intercalate "" (map stringifyPlace placeList)
+
 stringifyPlace :: Place -> String
-stringifyPlace place = stringifyName place ++ stringifyLocation place ++ "   " ++ stringifyRainData place
+stringifyPlace place = stringifyName place ++ stringifyLocation place ++ "   " ++ stringifyRainData place ++ "\n"
 
 stringifyName :: Place -> String
 stringifyName place = (locationName place) ++ concat (replicate (14 - (length (locationName place))) " ")
@@ -236,12 +242,18 @@ stringifyLocation place = show (fst (position place)) ++ "  " ++ show (snd (posi
 stringifyRainData :: Place -> String
 stringifyRainData place = intercalate ", " (map show (rainData place))
 
+filePath :: String
+filePath = "places.txt"
 
 main :: IO ()
 main = do
-    content <- readFile "places.txt"
+    content <- readFile filePath
     let placesString = lines content
     let places = map parsePlace placesString
+    menu places
+
+menu :: [Place] -> IO ()
+menu placeList = do
     putStrLn "Rainfall Program\n\
     \ Please Select an Option:\n\
     \ 1: Return list of name of places\n\
@@ -251,9 +263,10 @@ main = do
     \ 5: Update raindata with a list of new values\n\
     \ 6: Replace location with a new location\n\
     \ 7: Return closest dry place to a location\n\
-    \ 8: Display rainfall map"
+    \ 8: Display rainfall map\n\
+    \ 9: Exit"
     option <- getLine
-    feature (read option) places
+    feature (read option) placeList
 
 feature :: Int -> [Place] -> IO ()
 feature 1 placeData = print ( getPlaceNames placeData )
@@ -262,7 +275,7 @@ feature 2 placeData = do
     putStrLn "Enter place name"
     placeName <- getLine
     print ( getAverageRainfallFromName placeName placeData )
-    main
+    menu placeData
 
 feature 3 placeData = print ( placesToString placeData )
 
@@ -270,22 +283,41 @@ feature 4 placeData = do
     putStrLn "Enter number of days ago"
     numDays <- getLine
     print ( outputDryPlaces 2 placeData )
-    main
+    menu placeData
 
 -- feature 5 placeData =
 
--- feature 6 placeData = do
---     putStrLn "Enter location name to replace"
---     locationName <- getLine
---     putStrLn "Enter new place in this format (Place '<LocationName>' (Latitude, Longtitude) [List of raindata])"
---     placeData <- getLine
---     print ( updateData "Plymouth" (Place "Portsmouth" (50.8, -1.1) [0, 0, 3, 2, 5, 2, 1]) placeData )
---     main
+feature 6 placeData = do
+    putStrLn "Enter location name to replace"
+    locationName <- getLine
+    newPlace <- inputNewPlace
+    let updatedPlaceData = updateData locationName newPlace placeData
+    menu updatedPlaceData
 
 feature 7 placeData = do
     putStrLn "Enter search loctation"
-    main
+    menu placeData
 
 feature 8 placeData = do
     clearScreen
     showMarkers placeData
+    writeAt (0,80) "Press any key to close map"
+    x <- getChar
+    clearScreen
+    menu placeData
+
+feature 9 placeData = do
+    let placesString = stringifyPlaces placeData
+    writeFile filePath placesString
+
+inputNewPlace :: IO Place
+inputNewPlace = do
+    putStrLn "Enter place name"
+    placeName <- getLine
+    putStrLn "Enter location   Format: (Lat, Lng)"
+    position <- getLine
+    let parsedPosition = read position :: LatLng
+    putStrLn "Enter rain data  Format: []"
+    rainData <- getLine
+    let parsedRainData = read rainData :: [Int]
+    return (Place placeName parsedPosition parsedRainData)

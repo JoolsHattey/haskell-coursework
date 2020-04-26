@@ -73,7 +73,10 @@ formatLocationName :: String -> String
 formatLocationName location = location ++ intercalate "" ( replicate (13-(length location)) " ")
 
 rainDataToString :: [Int] -> String
-rainDataToString rainData = intercalate " " ( map show rainData )
+rainDataToString rainData = intercalate "" (map formatColumn rainData)
+
+formatColumn :: Int -> String
+formatColumn rainPoint = show rainPoint ++ intercalate "" ( replicate ( 4 - (length (show rainPoint))) " ")
 
 
 -- demo 4
@@ -337,6 +340,10 @@ feature 8 placeData = do
 feature 9 placeData = do
     let placesString = stringifyPlaces placeData
     writeFile filePath placesString
+
+feature x placeData = do
+    print "Invalid option returning to menu"
+    menu placeData
 
 inputNewPlace = do
     putStrLn "Enter place name"

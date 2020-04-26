@@ -3,6 +3,7 @@
 -- UP894547
 --
 
+import System.IO
 import Data.List
 import Data.Maybe
 import Data.Char (isSpace)
@@ -86,8 +87,26 @@ getDryPlaces numDays placeList = [ x | x <- placeList, (rainData x) !! (numDays-
 
 --  demo 5
 
--- updateRainfallData :: [Int] -> [Place] -> [Place]
--- updateRainfallData newData placeList = map getfst data
+updateRainfallData :: [Int] -> [Place] -> [Place]
+updateRainfallData newData placeList = updateThing newData 0 placeList
+
+updateThing :: [Int] -> Int -> [Place] -> [Place]
+updateThing newData index placeList
+    | (length newData) > 0 = updateThing (tail newData) (index+1) (replace index (updatePlaceRainData (head newData) (placeList !! index) ) placeList)
+    | otherwise = placeList
+
+-- replaceNth :: Int -> a -> [a] -> [a]
+-- replaceNth _ _ [] = []
+-- replaceNth n newVal (x:xs)
+--     | n == 0 = newVal:xs
+--     | otherwise = x:replaceNth (n-1) newVal xs
+
+updatePlaceRainData :: Int -> Place -> Place
+updatePlaceRainData newData place = place { rainData = (insertRainPoint newData (rainData place)) }
+
+insertRainPoint :: Int -> [Int] -> [Int]
+insertRainPoint newData dataList = newData : (init dataList)
+
 
 
 -- demo 6
@@ -126,8 +145,7 @@ demo 1 = print ( getPlaceNames testData )
 demo 2 = print ( getAverageRainfallFromName "Cardiff" testData )
 demo 3 = putStrLn ( placesToString testData )
 demo 4 = print ( outputDryPlaces 2 testData )
--- demo 5 = -- update the data with most recent rainfall 
---          --[0,8,0,0,5,0,0,3,4,2,0,8,0,0] (and remove oldest rainfall figures)
+demo 5 = print ( updateRainfallData [0,8,0,0,5,0,0,3,4,2,0,8,0,0] testData )
 demo 6 = print ( updateData "Plymouth" (Place "Portsmouth" (50.8, -1.1) [0, 0, 3, 2, 5, 2, 1]) testData )
 demo 7 = print ( returnClosestDryPlace (50.9, -1.3) testData )
 demo 8 = showMarkers testData
@@ -162,6 +180,12 @@ writeAt position text = do
 padding :: Double
 padding = 1.0
 
+mapWidth :: Double
+mapWidth = 80
+
+mapHeight :: Double
+mapHeight = 50
+
 getTopBound :: Double
 getTopBound = maximum (map fst (map position testData)) + padding
 
@@ -181,10 +205,10 @@ getHeightRange :: Double
 getHeightRange = getTopBound - getBottomBound
 
 getWidthRatio :: Double
-getWidthRatio = 80 / getWidthRange
+getWidthRatio = mapWidth / getWidthRange
 
 getHeightRatio :: Double
-getHeightRatio = 50 / getHeightRange
+getHeightRatio = mapHeight / getHeightRange
 
 getScreenPos :: LatLng -> ScreenPosition
 getScreenPos pos = (round (abs((getLeftBound - (snd pos))) * getWidthRatio), round ((getTopBound - (fst pos)) * getHeightRatio))
@@ -234,10 +258,10 @@ stringifyPlace :: Place -> String
 stringifyPlace place = stringifyName place ++ stringifyLocation place ++ "   " ++ stringifyRainData place ++ "\n"
 
 stringifyName :: Place -> String
-stringifyName place = (locationName place) ++ concat (replicate (14 - (length (locationName place))) " ")
+stringifyName place = (locationName place) ++ concat (replicate (13 - (length (locationName place))) " ")
 
 stringifyLocation :: Place -> String
-stringifyLocation place = show (fst (position place)) ++ "  " ++ show (snd (position place))
+stringifyLocation place = show (fst (position place)) ++ concat (replicate  (6-(length ( show ( snd ( position place ) ) ) )) " ") ++ show (snd (position place))
 
 stringifyRainData :: Place -> String
 stringifyRainData place = intercalate ", " (map show (rainData place))
@@ -248,8 +272,8 @@ filePath = "places.txt"
 main :: IO ()
 main = do
     content <- readFile filePath
-    let placesString = lines content
-    let places = map parsePlace placesString
+    let placeStringList = lines content
+    let places = map parsePlace placeStringList
     menu places
 
 menu :: [Place] -> IO ()
@@ -264,7 +288,7 @@ menu placeList = do
     \ 6: Replace location with a new location\n\
     \ 7: Return closest dry place to a location\n\
     \ 8: Display rainfall map\n\
-    \ 9: Exit"
+    \ 9: Save and Exit"
     option <- getLine
     feature (read option) placeList
 
@@ -277,7 +301,7 @@ feature 2 placeData = do
     print ( getAverageRainfallFromName placeName placeData )
     menu placeData
 
-feature 3 placeData = print ( placesToString placeData )
+feature 3 placeData = putStrLn ( placesToString placeData )
 
 feature 4 placeData = do
     putStrLn "Enter number of days ago"
@@ -285,7 +309,11 @@ feature 4 placeData = do
     print ( outputDryPlaces 2 placeData )
     menu placeData
 
--- feature 5 placeData =
+feature 5 placeData = do
+    putStrLn "Enter new rain data"
+    newData <- getLine
+    let updatedPlaceData = updateRainfallData (read newData :: [Int]) placeData
+    menu updatedPlaceData
 
 feature 6 placeData = do
     putStrLn "Enter location name to replace"
@@ -310,7 +338,6 @@ feature 9 placeData = do
     let placesString = stringifyPlaces placeData
     writeFile filePath placesString
 
-inputNewPlace :: IO Place
 inputNewPlace = do
     putStrLn "Enter place name"
     placeName <- getLine

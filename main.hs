@@ -40,6 +40,17 @@ testData = [ Place "London" (51.5, -0.1) [0, 0, 5, 8, 8, 0, 0],
 --  Your functional code goes here
 --
 
+-- Helper functions
+
+replaceNthPlace :: Int -> Place -> [Place] -> [Place]
+replaceNthPlace _ _ [] = []
+replaceNthPlace n newPlace (x:xs)
+    | n == 0 = newPlace:xs
+    | otherwise = x:replaceNthPlace (n-1) newPlace xs
+
+averageList :: [Int] -> Float
+averageList input = fromIntegral (sum input) / fromIntegral (length input)
+
 -- demo 1
 
 getPlaceNames :: [Place] -> [String]
@@ -52,13 +63,10 @@ getAverageRainfallFromName :: String -> [Place] -> Float
 getAverageRainfallFromName searchName placeList = getAverageRainfall ( getPlaceByName searchName placeList )
 
 getAverageRainfall :: Place -> Float
-getAverageRainfall place = averageList ( rainData place )
+getAverageRainfall place = averageList ( rainData place ) 
 
 getPlaceByName :: String -> [Place] -> Place
 getPlaceByName searchName placeList = head [ x | x <- placeList, locationName x == searchName ]
-
-averageList :: [Int] -> Float
-averageList input = fromIntegral (sum input) / fromIntegral (length input)
 
 
 -- demo 3
@@ -95,14 +103,8 @@ updateRainfallData newData placeList = updateThing newData 0 placeList
 
 updateThing :: [Int] -> Int -> [Place] -> [Place]
 updateThing newData index placeList
-    | (length newData) > 0 = updateThing (tail newData) (index+1) (replace index (updatePlaceRainData (head newData) (placeList !! index) ) placeList)
+    | (length newData) > 0 = updateThing (tail newData) (index+1) (replaceNthPlace index (updatePlaceRainData (head newData) (placeList !! index) ) placeList)
     | otherwise = placeList
-
--- replaceNth :: Int -> a -> [a] -> [a]
--- replaceNth _ _ [] = []
--- replaceNth n newVal (x:xs)
---     | n == 0 = newVal:xs
---     | otherwise = x:replaceNth (n-1) newVal xs
 
 updatePlaceRainData :: Int -> Place -> Place
 updatePlaceRainData newData place = place { rainData = (insertRainPoint newData (rainData place)) }
@@ -111,17 +113,13 @@ insertRainPoint :: Int -> [Int] -> [Int]
 insertRainPoint newData dataList = newData : (init dataList)
 
 
-
 -- demo 6
 
 updateData :: String -> Place -> [Place] -> [Place]
-updateData oldPlaceName newPlace placeList = replace (getIndex oldPlaceName placeList) newPlace placeList
+updateData oldPlaceName newPlace placeList = replaceNthPlace (getIndex oldPlaceName placeList) newPlace placeList
 
 getIndex :: String -> [Place] -> Int
 getIndex searchString list = fromMaybe 0 ( findIndex (==searchString) (map locationName list) )
-
-replace :: Int -> Place -> [Place] -> [Place]
-replace pos newVal list = take pos list ++ newVal : drop (pos+1) list
 
 
 -- demo 7
@@ -275,12 +273,14 @@ filePath = "places.txt"
 main :: IO ()
 main = do
     content <- readFile filePath
+    putStrLn $ "Loaded " ++ show (length content) ++ " places"
     let placeStringList = lines content
     let places = map parsePlace placeStringList
     menu places
 
 menu :: [Place] -> IO ()
 menu placeList = do
+    clearScreen
     putStrLn "Rainfall Program\n\
     \ Please Select an Option:\n\
     \ 1: Return list of name of places\n\
@@ -293,43 +293,60 @@ menu placeList = do
     \ 8: Display rainfall map\n\
     \ 9: Save and Exit"
     option <- getLine
-    feature (read option) placeList
+    clearScreen
+    menuOption (read option) placeList
 
-feature :: Int -> [Place] -> IO ()
-feature 1 placeData = print ( getPlaceNames placeData )
+menuOption :: Int -> [Place] -> IO ()
+menuOption 1 placeData = do
+    print ( getPlaceNames placeData )
+    putStrLn "\nPress any key to return to menu"
+    x <- getChar
+    menu placeData
 
-feature 2 placeData = do
+menuOption 2 placeData = do
     putStrLn "Enter place name"
     placeName <- getLine
+    clearScreen
     print ( getAverageRainfallFromName placeName placeData )
     menu placeData
 
-feature 3 placeData = putStrLn ( placesToString placeData )
-
-feature 4 placeData = do
-    putStrLn "Enter number of days ago"
-    numDays <- getLine
-    print ( outputDryPlaces 2 placeData )
+menuOption 3 placeData = do
+    clearScreen
+    putStrLn ( placesToString placeData )
+    writeAt (0,80) "Press any key to return to menu"
+    x <- getChar
     menu placeData
 
-feature 5 placeData = do
+menuOption 4 placeData = do
+    putStrLn "Enter number of days ago"
+    numDays <- getLine
+    print ( outputDryPlaces (read numDays :: Int) placeData )
+    putStrLn "\nPress any key to return to menu"
+    x <- getChar
+    menu placeData
+
+menuOption 5 placeData = do
     putStrLn "Enter new rain data"
     newData <- getLine
     let updatedPlaceData = updateRainfallData (read newData :: [Int]) placeData
     menu updatedPlaceData
 
-feature 6 placeData = do
+menuOption 6 placeData = do
     putStrLn "Enter location name to replace"
     locationName <- getLine
     newPlace <- inputNewPlace
     let updatedPlaceData = updateData locationName newPlace placeData
     menu updatedPlaceData
 
-feature 7 placeData = do
+menuOption 7 placeData = do
     putStrLn "Enter search loctation"
+    position <- getLine
+    print ( returnClosestDryPlace (read position :: LatLng) placeData )
+    putStrLn "\nPress any key to return to menu"
+    x <- getChar
     menu placeData
 
-feature 8 placeData = do
+menuOption 8 placeData = do
     clearScreen
     showMarkers placeData
     writeAt (0,80) "Press any key to close map"
@@ -337,11 +354,11 @@ feature 8 placeData = do
     clearScreen
     menu placeData
 
-feature 9 placeData = do
+menuOption 9 placeData = do
     let placesString = stringifyPlaces placeData
     writeFile filePath placesString
 
-feature x placeData = do
+menuOption x placeData = do
     print "Invalid option returning to menu"
     menu placeData
 

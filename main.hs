@@ -5,7 +5,9 @@
 
 import System.IO
 import Data.List
+import Text.Printf
 import Data.Maybe
+import Data.Bool
 import Data.Char (isSpace)
 
 --
@@ -149,7 +151,9 @@ demo 4 = print ( outputDryPlaces 2 testData )
 demo 5 = print ( updateRainfallData [0,8,0,0,5,0,0,3,4,2,0,8,0,0] testData )
 demo 6 = print ( updateData "Plymouth" (Place "Portsmouth" (50.8, -1.1) [0, 0, 3, 2, 5, 2, 1]) testData )
 demo 7 = print ( returnClosestDryPlace (50.9, -1.3) testData )
-demo 8 = showMarkers testData
+demo 8 = do
+    clearScreen
+    showMarkers testData
 
 
 --
@@ -221,7 +225,7 @@ renderMarker :: ScreenPosition -> Place -> IO ()
 renderMarker pos place = do
     writeAt pos "+"
     renderText pos 1 (locationName place)
-    renderText pos 2 ("Avg rain: " ++ show (getAverageRainfall place))
+    renderText pos 2 ("Avg rain: " ++ printf "%.2f" (getAverageRainfall place))
 
 renderText :: ScreenPosition -> Int -> String -> IO ()
 renderText pos yOffset text = writeAt (centerText pos yOffset text) text
@@ -240,6 +244,7 @@ parsePlace placeString = Place (parseName placeString) (parseLocation placeStrin
 parseName :: String -> String
 parseName placeString = trim ( fst (splitAt 13 placeString) )
 
+trim :: String -> String
 trim = dropWhileEnd isSpace . dropWhile isSpace
 
 parseLocation :: String -> LatLng
@@ -298,7 +303,7 @@ menu placeList = do
 
 menuOption :: Int -> [Place] -> IO ()
 menuOption 1 placeData = do
-    print ( getPlaceNames placeData )
+    putStrLn (intercalate "\n" ( getPlaceNames placeData ))
     putStrLn "\nPress any key to return to menu"
     x <- getChar
     menu placeData
@@ -307,7 +312,11 @@ menuOption 2 placeData = do
     putStrLn "Enter place name"
     placeName <- getLine
     clearScreen
-    print ( getAverageRainfallFromName placeName placeData )
+    putStrLn ("Average Rainfall for " ++ placeName ++ ":")
+    printf "%.2f" ( getAverageRainfallFromName placeName placeData )
+    putStrLn "\n"
+    putStrLn "\nPress any key to return to menu"
+    x <- getChar
     menu placeData
 
 menuOption 3 placeData = do
@@ -320,7 +329,9 @@ menuOption 3 placeData = do
 menuOption 4 placeData = do
     putStrLn "Enter number of days ago"
     numDays <- getLine
-    print ( outputDryPlaces (read numDays :: Int) placeData )
+    clearScreen
+    putStrLn ("Places dry " ++ numDays ++ (bool " days" " day"(numDays == "1")) ++ " ago:\n")
+    putStrLn (intercalate "\n" ( outputDryPlaces (read numDays :: Int) placeData ) )
     putStrLn "\nPress any key to return to menu"
     x <- getChar
     menu placeData
@@ -333,9 +344,13 @@ menuOption 5 placeData = do
 
 menuOption 6 placeData = do
     putStrLn "Enter location name to replace"
-    locationName <- getLine
+    oldPlaceName <- getLine
+    putStrLn "\n"
     newPlace <- inputNewPlace
-    let updatedPlaceData = updateData locationName newPlace placeData
+    let updatedPlaceData = updateData oldPlaceName newPlace placeData
+    putStrLn ("Successfully Replaced " ++ oldPlaceName ++ " with " ++ (locationName newPlace))
+    putStrLn "\nPress any key to return to menu"
+    x <- getChar
     menu updatedPlaceData
 
 menuOption 7 placeData = do
@@ -363,12 +378,15 @@ menuOption x placeData = do
     menu placeData
 
 inputNewPlace = do
-    putStrLn "Enter place name"
+    putStrLn "Enter new place name"
     placeName <- getLine
-    putStrLn "Enter location   Format: (Lat, Lng)"
+    putStrLn "\n"
+    putStrLn "Enter location Eg: (50.1, -1.2)"
     position <- getLine
+    putStrLn "\n"
     let parsedPosition = read position :: LatLng
-    putStrLn "Enter rain data  Format: []"
+    putStrLn "Enter rain data Eg: [1,1,1,1,1,1,1]"
     rainData <- getLine
+    putStrLn "\n"
     let parsedRainData = read rainData :: [Int]
     return (Place placeName parsedPosition parsedRainData)
